@@ -1,0 +1,7 @@
+../Core/Src/motor.cpp:40:6:void motor_pins_setup()	8	static
+../Core/Src/motor.cpp:50:6:void encoder_setup()	0	static
+../Core/Src/motor.cpp:53:6:void pid_setup()	16	static
+../Core/Src/motor.cpp:59:6:void motor_Init()	8	static
+../Core/Src/motor.cpp:65:6:void motor_set_speed(int16_t)	8	static
+../Core/Src/motor.cpp:83:9:int16_t encoder_loop()	24	static
+../Core/Src/motor.cpp:98:1:cpp)	40	static
