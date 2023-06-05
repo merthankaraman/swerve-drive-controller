@@ -18,6 +18,7 @@
 #define MYSTDID 0x010
 //10
 #define OTHERSTDID 0x017
+
 uint16_t get_can_numbers(short data);
 extern CAN_HandleTypeDef hcan;
 
@@ -30,11 +31,11 @@ struct MOTOR{
 
 };
 
-void Steer_CAN_Init();
+void CAN_Fonk_Init();
 
-void Steer_CAN_Transmit(struct MOTOR motorx);
+void CAN_Transmit_Datas(struct MOTOR motorx);
 
-void Steer_CAN_Receive_motor(float *p, float *p2);
+void CAN_Receive_motors(float *p, float *p2);
 
 #ifdef __cplusplus
 }

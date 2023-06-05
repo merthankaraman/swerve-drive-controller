@@ -38,7 +38,11 @@ void motor_set_pwm(int16_t pwm);
 
 void motor_set_speed(double speed);
 
+void motor_set_angle(double angle);
+
 double motor_get_speed();
+
+double motor_get_angle();
 
 #ifdef __cplusplus
 }

@@ -33,7 +33,7 @@ static int32_t nowTime_1=0, dTime_1=0;
 uint16_t recive_numbers = 0, send_numbers = 0;
 
 
-void Steer_CAN_Init() {
+void CAN_Fonk_Init() {
 
 	CAN_FilterTypeDef canfilterconfig;
 
@@ -111,7 +111,7 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
 
 }
 
-void Steer_CAN_Receive_motor(float *p, float *p2){
+void CAN_Receive_motors(float *p, float *p2){
 	dTime_1 = HAL_GetTick();
 	if(dTime_1 - nowTime_1 > CAN_DEADTIME){
 		*p =0;
@@ -123,7 +123,7 @@ void Steer_CAN_Receive_motor(float *p, float *p2){
 	}
 }
 
-void Steer_CAN_Transmit(struct MOTOR motorx) {
+void CAN_Transmit_Datas(struct MOTOR motorx) {
 	uint32_t txmailbox;
 	uint8_t txdata[8];
 
@@ -135,6 +135,6 @@ void Steer_CAN_Transmit(struct MOTOR motorx) {
 	HAL_StatusTypeDef a;
 	a = HAL_CAN_AddTxMessage(&hcan, &myTxHeader, txdata, &txmailbox);
 	if (a == HAL_ERROR) send_numbers = send_numbers - 1;
-	else if (a == HAL_OK)send_numbers = send_numbers + 1;
+	else if (a == HAL_OK) send_numbers = send_numbers + 1;
 
 }

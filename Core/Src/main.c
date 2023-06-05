@@ -184,7 +184,7 @@ int main(void)
   MX_CAN_Init();
   /* USER CODE BEGIN 2 */
   motor_Init();
-  Steer_CAN_Init();
+  CAN_Fonk_Init();
   struct MOTOR motor;
     motor.current=10;
   //stepper_Init();
@@ -198,57 +198,66 @@ int main(void)
   char data[5];
   int32_t enc_pulses = 0;
   static int32_t time_now = 0, time_old = 0;
+  bool can_debug, speed_enc_debug, angle_enc_debug;
+  const short device_drive = 1, device_steer = 2;
+  short device;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1){
-	  /*lcd_setCursor(1,1);
-	  motor_set_speed(0.2);
-	  enc_pulses = encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals: "); lcd_send_string(data);
+	  CAN_Transmit_Datas(motor);
+	  CAN_Receive_motors(&motor_speed_wanted,&motor_angle_wanted);
 
-	  lcd_setCursor(2,1); lcd_send_string("sp: "); sprintf(data,"%lf",motor_get_speed()); lcd_send_string(data);
-	  //HAL_Delay(50);
-	  time_now = HAL_GetTick();
+	  device = 0;
 
-	  if (time_now - time_old >= 100){ time_old = HAL_GetTick();  lcd_clear();
+	  if (device == device_drive){
+		  motor_set_speed(motor_speed_wanted);
 	  }
-	  */
-	  lcd_clear();
-	  //memcpy(ss,&s1,4);
-	  Steer_CAN_Transmit(motor);
-	  Steer_CAN_Receive_motor(&motor_speed_wanted,&motor_angle_wanted);
-
-	  //motor_angle_wanted = 2.0;
-
-	  lcd_setCursor(1,1); sprintf(data,"R%d", get_can_numbers(1)); lcd_send_string(data);
-	  lcd_setCursor(1,7); sprintf(data,"%.2f",motor_speed_wanted); lcd_send_string("s:"); lcd_send_string(data);
-	  lcd_setCursor(2,1); sprintf(data,"T%d", get_can_numbers(2)); lcd_send_string(data);
-	  lcd_setCursor(2,7); lcd_send_string("a:"); sprintf(data,"%.2f",motor_angle_wanted); lcd_send_string(data);
-	  HAL_Delay(200);
-	  //motor_set_pwm(450);
-	  //HAL_Delay(2000);
-
-	  /*motor_set_pwm(-450);
-	  HAL_Delay(2000);*/
-	  /*for (int i = 100; i<=450;i++){
-		  motor_set_pwm(i);
-		  HAL_Delay(50);
+	  else if (device == device_steer){
+		  motor_set_speed(motor_angle_wanted);
 	  }
-	  for (int i = 450; i>=100;i--){
-		  motor_set_pwm(i);
-		  HAL_Delay(50);
-	  }
-	  HAL_Delay(1000);
-	  for (int i = -100; i>=-450;i--){
-		  motor_set_pwm(i);
-		  HAL_Delay(50);
-	  }
-	  for (int i = -450; i<=-100;i++){
-		  motor_set_pwm(i);
-		  HAL_Delay(50);
-	  }*/
 
+	  speed_enc_debug = false;
+	  if (speed_enc_debug){
+		  lcd_setCursor(1,1);
+		  motor_set_speed(0.2);
+		  enc_pulses = encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals: "); lcd_send_string(data);
+
+		  lcd_setCursor(2,1); lcd_send_string("sp: "); sprintf(data,"%.2lf",motor_get_speed()); lcd_send_string(data);
+		  time_now = HAL_GetTick();
+
+		  if (time_now - time_old >= 100){
+			  time_old = HAL_GetTick();  lcd_clear();
+		  }
+	  }
+
+	  angle_enc_debug = true;
+	  if (angle_enc_debug){
+		  lcd_setCursor(1,1);
+		  motor_set_angle(0.2);
+		  enc_pulses = encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals: "); lcd_send_string(data);
+
+		  lcd_setCursor(2,1); lcd_send_string("an: "); sprintf(data,"%.2lf",motor_get_angle()); lcd_send_string(data);
+		  time_now = HAL_GetTick();
+
+		  if (time_now - time_old >= 100){
+			  time_old = HAL_GetTick();  lcd_clear();
+		  }
+	  }
+
+	  can_debug = false;
+	  if (can_debug){
+		  lcd_setCursor(1,1); sprintf(data,"R%d", get_can_numbers(1)); lcd_send_string(data);
+		  lcd_setCursor(1,7); sprintf(data,"%.2f",motor_speed_wanted); lcd_send_string("s:"); lcd_send_string(data);
+		  lcd_setCursor(2,1); sprintf(data,"T%d", get_can_numbers(2)); lcd_send_string(data);
+		  lcd_setCursor(2,7); lcd_send_string("a:"); sprintf(data,"%.2f",motor_angle_wanted); lcd_send_string(data);
+		  time_now = HAL_GetTick();
+		  if (time_now - time_old >= 100){
+			  time_old = HAL_GetTick();  lcd_clear();
+		  }
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

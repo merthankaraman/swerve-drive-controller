@@ -8,6 +8,8 @@
 #include "pid.h"
 #include "math.h"
 
+const double drive_gear_ratio = 1.0, steer_gear_ratio= 1.0;
+
 #define encoder_timer htim2
 extern TIM_HandleTypeDef encoder_timer;
 
@@ -16,13 +18,11 @@ extern TIM_HandleTypeDef pwm_timer;
 
 #define aar 900
 
-const float pulsesperturn = 600.0, wheel_diameter = 0.66;
-const float distancePerPulse = (M_PI * wheel_diameter) / pulsesperturn;
-
 int32_t encoder_pulses, encoder_pulses_prev;
 int16_t encoder_temp = 0, encoder_temp_shifting = 0;
+uint32_t encoder_temp_timer = 0;
 
-double pulses_diff, speed_act, speed_wanted, speed_diff;
+double pulses_diff, speed_act, speed_wanted, speed_diff, angle_act;
 
 #define PID_TIME 50
 const double kp = 0.4, ki = 0.2, kd = 2.0;
@@ -31,12 +31,7 @@ double pwm_duty = 0.0;
 
 PID motor_PID(&pid_input, &pid_output, &pid_setpoint, kp, ki, kd, _PID_CD_DIRECT);
 
-
-uint32_t encoder_temp_timer = 0;
-
 static int32_t nowTime = 0, dTime = 0;
-
-
 
 void motor_pins_setup(){
 	/*
@@ -111,6 +106,9 @@ void motor_set_pwm(int16_t pwm){
 double motor_get_speed(){
 	return speed_act;
 }
+double motor_get_angle(){
+	return angle_act;
+}
 
 void motor_set_speed(double speed){
 	nowTime = HAL_GetTick();
@@ -120,18 +118,18 @@ void motor_set_speed(double speed){
 		encoder_pulses = encoder_counter();
 		encoder_pulses_prev = encoder_pulses - encoder_pulses_prev;
 
-		speed_act = ((1000.00 * (double) encoder_pulses_prev) / ((double) (nowTime - dTime) * 600)) / 1.0;
+		speed_act = ((1000.00 * (double) encoder_pulses_prev) / ((double) (nowTime - dTime) * 600)) / drive_gear_ratio;
 
 		pid_input = speed_act;
 
 		motor_PID.Compute();
 
 		pwm_duty += pid_output;
-		if(pwm_duty > 900){
-			pwm_duty = 900;
+		if(pwm_duty > aar){
+			pwm_duty = aar;
 		}
-		else if(pwm_duty < -900){
-			pwm_duty = -900;
+		else if(pwm_duty < -aar){
+			pwm_duty = -aar;
 		}
 
 		if(pid_setpoint == 0){
@@ -148,3 +146,38 @@ void motor_set_speed(double speed){
 	}
 }
 
+void motor_set_angle(double angle){
+	nowTime = HAL_GetTick();
+	if (nowTime - dTime >= PID_TIME){
+		pid_setpoint=angle;
+
+		encoder_pulses = encoder_counter();
+		encoder_pulses_prev = encoder_pulses - encoder_pulses_prev;
+
+		angle_act = (((1000.00 * (double) encoder_pulses_prev) / ((double) (nowTime - dTime) * 600)) * M_PI) / steer_gear_ratio;
+
+		pid_input = angle_act;
+
+		motor_PID.Compute();
+
+		pwm_duty += pid_output;
+		if(pwm_duty > aar){
+			pwm_duty = aar;
+		}
+		else if(pwm_duty < -aar){
+			pwm_duty = -aar;
+		}
+
+		if(pid_setpoint == 0){
+			pwm_duty=0;
+			motor_set_pwm(pwm_duty);
+		}
+		else{
+			motor_set_pwm((int16_t)pwm_duty);
+
+		}
+		encoder_pulses_prev = encoder_counter();
+
+		dTime = HAL_GetTick();
+	}
+}
