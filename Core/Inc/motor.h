@@ -25,8 +25,7 @@ void motor_Init();
 //Init Motor settings
 
 int32_t encoder_counter();
-double ba(int a);
-int32_t aaa();
+const double print_gear_ratio(int a);
 //Encoder pins
 //Enc+ A0
 //Enc- A1
@@ -38,11 +37,11 @@ void motor_set_pwm(int16_t pwm);
 //Pwm+ A6
 //PWM- A7
 
-void motor_set_speed(double speed);
+void motor_set_angular_speed(double angular_speed);
 
 void motor_set_angle(double angle);
 
-double motor_get_speed();
+double motor_get_angular_speed();
 
 double motor_get_angle();
 

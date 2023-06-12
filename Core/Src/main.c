@@ -215,23 +215,21 @@ int main(void)
 //	  device = device_steer;
 
 	  if (device == device_drive){
-		  motor_set_speed(motor_speed_wanted);
+		  motor_set_angular_speed(motor_speed_wanted);
 	  }
 	  else if (device == device_steer){
-		  motor_set_speed(motor_angle_wanted);
+		  motor_set_angular_speed(motor_angle_wanted);
 	  }
 
 	  speed_enc_debug = true;
 	  if (speed_enc_debug){
+		  motor_set_angular_speed(0.2);
 		  lcd_setCursor(1,1);
-		  motor_set_speed(0.2);
-		  enc_pulses = encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals: "); lcd_send_string(data);
+		  enc_pulses = encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals:"); lcd_send_string(data);
 
-		  lcd_send_string("  "); sprintf(data,"%d",aaa()); lcd_send_string(data);
-
-		  lcd_setCursor(2,1); lcd_send_string("sp: "); sprintf(data,"%.2lf",motor_get_speed()); lcd_send_string(data);
+		  lcd_setCursor(2,1); lcd_send_string("sp:"); sprintf(data,"%.2lf",motor_get_angular_speed()); lcd_send_string(data);
 		  time_now = HAL_GetTick();
-		  lcd_send_string("  "); sprintf(data,"%.2lf",ba(2)); lcd_send_string(data);
+		  lcd_send_string("  "); sprintf(data,"%.5lf",print_gear_ratio(2)); lcd_send_string(data);
 
 		  if (time_now - time_old >= 100){
 			  time_old = HAL_GetTick();  lcd_clear();
@@ -240,13 +238,13 @@ int main(void)
 
 	  angle_enc_debug = false;
 	  if (angle_enc_debug){
-		  lcd_setCursor(1,1);
 		  motor_set_angle(0.2);
-		  enc_pulses = encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals: "); lcd_send_string(data);
+		  lcd_setCursor(1,1);
+		  enc_pulses = encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals:"); lcd_send_string(data);
 
-		  lcd_setCursor(2,1); lcd_send_string("an: "); sprintf(data,"%.2lf",motor_get_angle()); lcd_send_string(data);
+		  lcd_setCursor(2,1); lcd_send_string("an:"); sprintf(data,"%.2lf",motor_get_angle()); lcd_send_string(data);
 		  time_now = HAL_GetTick();
-		  lcd_send_string(" "); sprintf(data,"%.5lf",ba(1)); lcd_send_string(data);
+		  lcd_send_string(" "); sprintf(data,"%.5lf",print_gear_ratio(1)); lcd_send_string(data);
 
 		  if (time_now - time_old >= 100){
 			  time_old = HAL_GetTick();  lcd_clear();
@@ -404,16 +402,16 @@ static void MX_TIM2_Init(void)
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 0;
+  sConfig.IC1Filter = 10;
   sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 0;
+  sConfig.IC2Filter = 10;
   if (HAL_TIM_Encoder_Init(&htim2, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -710,13 +708,13 @@ static void MX_GPIO_Init(void)
 //void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //{
 //  /* USER CODE BEGIN Callback 0 */
-////////
+////////////
 //  /* USER CODE END Callback 0 */
 //  if (htim->Instance == TIM1) {
 //    HAL_IncTick();
 //  }
 //  /* USER CODE BEGIN Callback 1 */
-////////
+////////////
 //  /* USER CODE END Callback 1 */
 //}
 
