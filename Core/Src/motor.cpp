@@ -8,7 +8,18 @@
 #include "pid.h"
 #include "math.h"
 
-const double drive_gear_ratio = 1.0, steer_gear_ratio= 1.0;
+const double drive_motor2encoder = 12.0/36.0, drive_pinion= 12.0, drive_pinion2 = 70.0, drive_middle = 30.0, drive_middle2 = 26.0, drive_bevel = 20.0, drive_bevel2 = 68.0;
+const double drive_gear_ratio = (1 / ((drive_pinion / drive_pinion2) * (drive_middle / drive_middle2) * (drive_bevel / drive_bevel2) )) * drive_motor2encoder;
+
+const double steer_motor2encoder = 12.0/36.0, steer_pinion = 12.0, steer_pinion2 = 60.0, steer_middle = 16.32, steer_middle2 = 98;
+const double steer_gear_ratio = (1 / ((steer_pinion / steer_pinion2) * (steer_middle / steer_middle2) )) * steer_motor2encoder;
+
+double ba(int a){
+	if (a == 1)
+		return steer_gear_ratio;
+	else if (a == 2)
+		return drive_gear_ratio;
+}
 
 #define encoder_timer htim2
 extern TIM_HandleTypeDef encoder_timer;
@@ -68,8 +79,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 }
 
 int32_t encoder_counter(){
-	int32_t pulses = (int32_t)__HAL_TIM_GET_COUNTER(&encoder_timer) + (encoder_temp << 16);
+	int32_t pulses = (uint32_t)__HAL_TIM_GET_COUNTER(&encoder_timer) + (encoder_temp << 16);
 	return pulses/4;
+}
+int32_t aaa(){
+	return (uint32_t)__HAL_TIM_GET_COUNTER(&encoder_timer);
 }
 
 void pid_setup(){
@@ -118,7 +132,9 @@ void motor_set_speed(double speed){
 		encoder_pulses = encoder_counter();
 		encoder_pulses_prev = encoder_pulses - encoder_pulses_prev;
 
-		speed_act = ((1000.00 * (double) encoder_pulses_prev) / ((double) (nowTime - dTime) * 600)) / drive_gear_ratio;
+		//speed_act = ((1000.00 * (double) encoder_pulses_prev) / ((double) (nowTime - dTime) * 600)) / drive_gear_ratio;
+
+		speed_act = ((double) encoder_pulses / 600.0) / drive_gear_ratio;
 
 		pid_input = speed_act;
 
@@ -152,9 +168,10 @@ void motor_set_angle(double angle){
 		pid_setpoint=angle;
 
 		encoder_pulses = encoder_counter();
-		encoder_pulses_prev = encoder_pulses - encoder_pulses_prev;
+		//encoder_pulses_prev = encoder_pulses - encoder_pulses_prev;
 
-		angle_act = (((1000.00 * (double) encoder_pulses_prev) / ((double) (nowTime - dTime) * 600)) * M_PI) / steer_gear_ratio;
+		//angle_act = (((double) encoder_pulses / 600.0) * M_PI * 4) / 10;
+	    angle_act = (((double) encoder_pulses / 600.0) * M_PI * 2) / steer_gear_ratio;
 
 		pid_input = angle_act;
 

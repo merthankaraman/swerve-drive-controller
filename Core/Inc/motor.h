@@ -25,6 +25,8 @@ void motor_Init();
 //Init Motor settings
 
 int32_t encoder_counter();
+double ba(int a);
+int32_t aaa();
 //Encoder pins
 //Enc+ A0
 //Enc- A1
