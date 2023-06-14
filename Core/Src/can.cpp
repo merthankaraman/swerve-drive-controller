@@ -95,6 +95,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 	nowTime_1 = HAL_GetTick();
 
 	recive_numbers = recive_numbers + 1;
+	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
 	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 
 }

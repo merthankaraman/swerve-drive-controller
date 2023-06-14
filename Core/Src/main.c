@@ -201,6 +201,12 @@ int main(void)
   bool can_debug, speed_enc_debug, angle_enc_debug;
   const short device_drive = 1, device_steer = 2;
   short device;
+  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+  HAL_Delay(2000);
+  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+    HAL_Delay(2000);
 
   /* USER CODE END 2 */
 
@@ -213,6 +219,7 @@ int main(void)
 	  device = 0;
 //	  device = device_drive;
 //	  device = device_steer;
+	  motor_set_pwm((int16_t) motor_speed_wanted * 10);
 
 	  if (device == device_drive){
 		  motor_set_angular_speed(motor_speed_wanted);
@@ -221,7 +228,7 @@ int main(void)
 		  motor_set_angular_speed(motor_angle_wanted);
 	  }
 
-	  speed_enc_debug = true;
+	  speed_enc_debug = false;
 	  if (speed_enc_debug){
 		  motor_set_angular_speed(0.2);
 		  lcd_setCursor(1,1);
@@ -708,13 +715,13 @@ static void MX_GPIO_Init(void)
 //void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //{
 //  /* USER CODE BEGIN Callback 0 */
-////////////
+//////////////
 //  /* USER CODE END Callback 0 */
 //  if (htim->Instance == TIM1) {
 //    HAL_IncTick();
 //  }
 //  /* USER CODE BEGIN Callback 1 */
-////////////
+//////////////
 //  /* USER CODE END Callback 1 */
 //}
 
