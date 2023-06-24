@@ -24,13 +24,14 @@
 void motor_Init();
 //Init Motor settings
 
-int32_t encoder_counter();
+int32_t steer_encoder_counter();
+int32_t drive_encoder_counter();
 const double print_gear_ratio(int a);
 //Encoder pins
 //Enc+ A0
 //Enc- A1
 
-void motor_set_pwm(int16_t pwm);
+void motor_set_pwm(int16_t pwm, short motor);
 //Max pwm 900
 //Motor pins
 //Enable A5

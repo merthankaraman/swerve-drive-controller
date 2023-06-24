@@ -9,7 +9,7 @@
 #include <cstring>
 
 
-extern UART_HandleTypeDef huart1;
+//extern UART_HandleTypeDef huart1;
 
 uint8_t uartData[8]={0};
 
@@ -87,7 +87,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 	}
 	if(myRxHeader.StdId == 0x16){
 		memcpy(uartData,canData,8);
-		HAL_UART_Transmit(&huart1, uartData, 8, 50);
+		//HAL_UART_Transmit(&huart1, uartData, 8, 50);
 	}
 	else{
 		memcpy(rxData,canData,8);
@@ -95,7 +95,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 	nowTime_1 = HAL_GetTick();
 
 	recive_numbers = recive_numbers + 1;
-	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
 	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 
 }
