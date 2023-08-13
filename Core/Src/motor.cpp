@@ -30,7 +30,7 @@ extern TIM_HandleTypeDef steer_encoder_timer;
 #define pwm_timer htim1
 extern TIM_HandleTypeDef pwm_timer;
 
-#define aar 450
+#define aar 900
 #define min_aar 120
 
 int32_t steer_encoder_pulses, steer_encoder_pulses_prev;
@@ -47,7 +47,7 @@ const double encoder_resolution = 600.0;
 double drive_pulses_diff, steer_pulses_diff, angular_speed_act, angle_act;
 
 #define PID_TIME 50
-const double steer_kp = 1.0, steer_ki = 20.0, steer_kd = 2.0;
+const double steer_kp = 20.0, steer_ki = 10.0, steer_kd = 10.0;
 double steer_pid_input, steer_pid_output, steer_pid_setpoint;
 
 const double drive_kp = 80, drive_ki = 20.0, drive_kd = 10.0;
@@ -117,18 +117,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	}
 }
 double pwm_debug(int16_t select){
-	if (select == 1)
-		return drive_pwm_duty;
-	else if (select == 2)
-		return drive_pid_input;
-	else if (select == 3)
-		return drive_pid_output;
-	else if (select == 4)
-		return steer_pwm_duty;
-	else if (select == 5)
-		return steer_pid_input;
-	else if (select == 6)
-		return steer_pid_output;
+	if (select == 1) return drive_pwm_duty;
+	else if (select == 2) return drive_pid_input;
+	else if (select == 3) return drive_pid_output;
+	else if (select == 4) return steer_pwm_duty;
+	else if (select == 5) return steer_pid_input;
+	else if (select == 6) return steer_pid_output;
 }
 
 
@@ -145,11 +139,11 @@ int32_t drive_encoder_counter(){
 void pid_setup(){
 	steer_PID.SetMode(_PID_MODE_AUTOMATIC);
 	steer_PID.SetSampleTime(PID_TIME);
-	steer_PID.SetOutputLimits(-40, 40);
+	steer_PID.SetOutputLimits(-30, 30);
 
 	drive_PID.SetMode(_PID_MODE_AUTOMATIC);
 	drive_PID.SetSampleTime(PID_TIME);
-	drive_PID.SetOutputLimits(-30, 30);
+	drive_PID.SetOutputLimits(-200, 200);
 }
 
 void motor_Init(){
@@ -220,14 +214,17 @@ void motor_set_angular_speed(double angular_speed){
 
 		drive_PID.Compute();
 
-		drive_pwm_duty += drive_pid_output;
-
+		if (drive_pid_input != 0.0)
+			drive_pwm_duty += drive_pid_output;
+		else
+			drive_pwm_duty = 0;
+/*
 		if ((drive_pid_setpoint > 0) and (drive_pwm_duty < min_aar)){
 			drive_pwm_duty = min_aar;
 		}
 		else if ((drive_pid_setpoint < 0) and (drive_pwm_duty > -min_aar)){
 			drive_pwm_duty = -min_aar;
-		}
+		}*/
 
 		if(drive_pwm_duty > aar){
 			drive_pwm_duty = aar;
@@ -263,15 +260,18 @@ void motor_set_angle(double angle){
 
 	    steer_PID.Compute();
 
-	    steer_pwm_duty += steer_pid_output;
+	    if (abs(steer_pid_setpoint - steer_pid_input) != 0.0)
+	    	steer_pwm_duty += steer_pid_output;
+		else
+			steer_pwm_duty = 0;
 
-
+/*
 	    if ((steer_pid_setpoint > 0) and (steer_pwm_duty < min_aar)){
 	    	steer_pwm_duty = min_aar;
 		}
 	    else if ((steer_pid_setpoint < 0) and (steer_pwm_duty > -min_aar)){
 	    	steer_pwm_duty = -min_aar;
-		}
+		}*/
 
 
 		if(steer_pwm_duty > aar){

@@ -240,7 +240,7 @@ int main(void)
 	  angle_enc_debug = false;
 	  d_pwm_lcd_debug = false;
 	  s_pwm_lcd_debug = false;
-	  if (adress_input == 0){
+	  if (adress_input == 0 || adress_input == 4){
 		  can_debug = true;
 	  }
 	  else if (adress_input == 6){
@@ -259,7 +259,6 @@ int main(void)
 	  if (speed_enc_debug){
 		  lcd_setCursor(1,1);
 		  enc_pulses = drive_encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals:"); lcd_send_string(data);
-		  sprintf(data," %ld",adress_input); lcd_send_string(data);
 
 		  lcd_setCursor(2,1); lcd_send_string("sp:"); sprintf(data,"%.2lf",motor_get_angular_speed()); lcd_send_string(data);
 		  lcd_send_string("  "); sprintf(data,"%.5lf",print_gear_ratio(2)); lcd_send_string(data);
@@ -272,9 +271,9 @@ int main(void)
 	  if (d_pwm_lcd_debug){
 		  lcd_setCursor(1,1);
 		  sprintf(data,"%.0lf",pwm_debug(1)); lcd_send_string("dd:"); lcd_send_string(data);
-		  sprintf(data,"i: %.0lf",pwm_debug(2)); lcd_send_string(data);
+		  sprintf(data,"i: %.4lf",pwm_debug(2)); lcd_send_string(data);
 		  lcd_setCursor(2,1);
-		  sprintf(data,"o: %.0lf",pwm_debug(3)); lcd_send_string(data);
+		  sprintf(data,"o: %.4lf",pwm_debug(3)); lcd_send_string(data);
 		  //sprintf(data," tk: %ld",HAL_GetTick()); lcd_send_string(data);
 
 		  if (time_now - time_old >= 100){
@@ -285,9 +284,9 @@ int main(void)
 	  if (s_pwm_lcd_debug){
 		  lcd_setCursor(1,1);
 		  sprintf(data,"%.0lf",pwm_debug(4)); lcd_send_string("sd:"); lcd_send_string(data);
-		  sprintf(data,"i: %.0lf",pwm_debug(5)); lcd_send_string(data);
+		  sprintf(data,"i: %.4lf",pwm_debug(5)); lcd_send_string(data);
 		  lcd_setCursor(2,1);
-		  sprintf(data,"o: %.0lf",pwm_debug(6)); lcd_send_string(data);
+		  sprintf(data,"o: %.4lf",pwm_debug(6)); lcd_send_string(data);
 		  //sprintf(data," tk: %ld",HAL_GetTick()); lcd_send_string(data);
 
 		  if (time_now - time_old >= 100){
@@ -299,7 +298,6 @@ int main(void)
 	  if (angle_enc_debug){
 		  lcd_setCursor(1,1);
 		  enc_pulses = steer_encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals:"); lcd_send_string(data);
-		  sprintf(data," %ld",adress_input); lcd_send_string(data);
 
 		  lcd_setCursor(2,1); lcd_send_string("an:"); sprintf(data,"%.2lf",motor_get_angle()); lcd_send_string(data);
 
