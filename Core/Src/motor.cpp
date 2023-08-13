@@ -31,7 +31,7 @@ extern TIM_HandleTypeDef steer_encoder_timer;
 extern TIM_HandleTypeDef pwm_timer;
 
 #define aar 450
-#define min_aar 150
+#define min_aar 120
 
 int32_t steer_encoder_pulses, steer_encoder_pulses_prev;
 int32_t drive_encoder_pulses, drive_encoder_pulses_prev;
@@ -47,17 +47,17 @@ const double encoder_resolution = 600.0;
 double drive_pulses_diff, steer_pulses_diff, angular_speed_act, angle_act;
 
 #define PID_TIME 50
-const double steer_kp = 1.0, steer_ki = 0.0, steer_kd = 1.0;
+const double steer_kp = 1.0, steer_ki = 20.0, steer_kd = 2.0;
 double steer_pid_input, steer_pid_output, steer_pid_setpoint;
 
-const double drive_kp = 80, drive_ki = 0.0, drive_kd = 10.0;
+const double drive_kp = 80, drive_ki = 20.0, drive_kd = 10.0;
 double drive_pid_input, drive_pid_output, drive_pid_setpoint;
 
 double drive_pwm_duty = 0.0;
 double steer_pwm_duty = 0.0;
 
 PID steer_PID(&steer_pid_input, &steer_pid_output, &steer_pid_setpoint, steer_kp, steer_ki, steer_kd, _PID_CD_DIRECT);
-PID drive_PID(&drive_pid_input, &drive_pid_output, &steer_pid_setpoint, drive_kp, drive_ki, drive_kd, _PID_CD_DIRECT);
+PID drive_PID(&drive_pid_input, &drive_pid_output, &drive_pid_setpoint, drive_kp, drive_ki, drive_kd, _PID_CD_DIRECT);
 
 static int32_t drive_nowTime = 0, drive_dTime = 0;
 static int32_t steer_nowTime = 0, steer_dTime = 0;
@@ -116,6 +116,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	    HAL_IncTick();
 	}
 }
+double pwm_debug(int16_t select){
+	if (select == 1)
+		return drive_pwm_duty;
+	else if (select == 2)
+		return drive_pid_input;
+	else if (select == 3)
+		return drive_pid_output;
+	else if (select == 4)
+		return steer_pwm_duty;
+	else if (select == 5)
+		return steer_pid_input;
+	else if (select == 6)
+		return steer_pid_output;
+}
+
 
 int32_t steer_encoder_counter(){
 	int32_t pulses = (uint32_t)__HAL_TIM_GET_COUNTER(&steer_encoder_timer) + (steer_encoder_temp << 16);
@@ -130,11 +145,11 @@ int32_t drive_encoder_counter(){
 void pid_setup(){
 	steer_PID.SetMode(_PID_MODE_AUTOMATIC);
 	steer_PID.SetSampleTime(PID_TIME);
-	steer_PID.SetOutputLimits(-450, 450);
+	steer_PID.SetOutputLimits(-40, 40);
 
 	drive_PID.SetMode(_PID_MODE_AUTOMATIC);
 	drive_PID.SetSampleTime(PID_TIME);
-	drive_PID.SetOutputLimits(-10, 10);
+	drive_PID.SetOutputLimits(-30, 30);
 }
 
 void motor_Init(){
@@ -149,8 +164,8 @@ void motor_set_pwm(int16_t pwm, short motor){
 		if (pwm != 0){
 			HAL_GPIO_WritePin(drive_m_en_GPIO_Port, drive_m_en_Pin, GPIO_PIN_SET);
 			if(pwm>0){
-				pwm_timer.Instance->CCR1 = pwm;  //PA6
-				pwm_timer.Instance->CCR2 = 0;    //PA7
+				pwm_timer.Instance->CCR1 = pwm;  //PA8
+				pwm_timer.Instance->CCR2 = 0;    //PA9
 			}
 			else{
 				pwm_timer.Instance->CCR1 = 0;
@@ -158,8 +173,8 @@ void motor_set_pwm(int16_t pwm, short motor){
 			}
 		}
 		else{
-			pwm_timer.Instance->CCR1 = 0;        //PA6
-			pwm_timer.Instance->CCR2 = 0;        //PA7
+			pwm_timer.Instance->CCR1 = 0;        //PA8
+			pwm_timer.Instance->CCR2 = 0;        //PA9
 			HAL_GPIO_WritePin(drive_m_en_GPIO_Port, drive_m_en_Pin, GPIO_PIN_RESET);;
 		}
 	}
@@ -167,8 +182,8 @@ void motor_set_pwm(int16_t pwm, short motor){
 		if (pwm != 0){
 			HAL_GPIO_WritePin(steer_m_en_GPIO_Port, steer_m_en_Pin, GPIO_PIN_SET);
 			if(pwm>0){
-				pwm_timer.Instance->CCR3 = pwm;  //PA6
-				pwm_timer.Instance->CCR4 = 0;    //PA7
+				pwm_timer.Instance->CCR3 = pwm;  //PA10
+				pwm_timer.Instance->CCR4 = 0;    //PA11
 			}
 			else{
 				pwm_timer.Instance->CCR3 = 0;
@@ -176,8 +191,8 @@ void motor_set_pwm(int16_t pwm, short motor){
 			}
 		}
 		else{
-			pwm_timer.Instance->CCR3 = 0;        //PA6
-			pwm_timer.Instance->CCR4 = 0;        //PA7
+			pwm_timer.Instance->CCR3 = 0;        //PA10
+			pwm_timer.Instance->CCR4 = 0;        //PA11
 			HAL_GPIO_WritePin(steer_m_en_GPIO_Port, steer_m_en_Pin, GPIO_PIN_RESET);;
 		}
 	}
@@ -201,16 +216,16 @@ void motor_set_angular_speed(double angular_speed){
 
 		//speed_act = ((double) encoder_pulses / encoder_resolution) / drive_gear_ratio;
 
-		drive_pid_input = angular_speed_act;
+		drive_pid_input = angular_speed_act;// * 50.0;
 
 		drive_PID.Compute();
 
 		drive_pwm_duty += drive_pid_output;
 
-		if ((angular_speed > 0) and (drive_pwm_duty < min_aar)){
+		if ((drive_pid_setpoint > 0) and (drive_pwm_duty < min_aar)){
 			drive_pwm_duty = min_aar;
 		}
-		else if ((angular_speed < 0) and (drive_pwm_duty > -min_aar)){
+		else if ((drive_pid_setpoint < 0) and (drive_pwm_duty > -min_aar)){
 			drive_pwm_duty = -min_aar;
 		}
 
@@ -221,8 +236,8 @@ void motor_set_angular_speed(double angular_speed){
 			drive_pwm_duty = -aar;
 		}
 
-		if(drive_pid_setpoint == 0){
-			drive_pwm_duty=0;
+		if(drive_pid_setpoint == 0.0){
+			//drive_pwm_duty=0;
 			motor_set_pwm(drive_pwm_duty, 1);
 		}
 		else{
@@ -238,24 +253,26 @@ void motor_set_angular_speed(double angular_speed){
 void motor_set_angle(double angle){
 	steer_nowTime = HAL_GetTick();
 	if (steer_nowTime - steer_dTime >= PID_TIME){
-		steer_pid_setpoint=angle * 100.0;
+		steer_pid_setpoint=angle * (180.0 / M_PI);
 
 		steer_encoder_pulses = steer_encoder_counter();
 
 	    angle_act = (((double) steer_encoder_pulses / encoder_resolution) * M_PI * 2.0) / steer_gear_ratio;
 
-	    steer_pid_input = angle_act * 100.0;
+	    steer_pid_input = angle_act * (180.0 / M_PI);
 
 	    steer_PID.Compute();
 
-	    steer_pwm_duty += (steer_pid_output * 100.0);
+	    steer_pwm_duty += steer_pid_output;
 
-	    if ((angle > 0) and (steer_pwm_duty < min_aar)){
+
+	    if ((steer_pid_setpoint > 0) and (steer_pwm_duty < min_aar)){
 	    	steer_pwm_duty = min_aar;
 		}
-	    else if ((angle < 0) and (steer_pwm_duty > -min_aar)){
+	    else if ((steer_pid_setpoint < 0) and (steer_pwm_duty > -min_aar)){
 	    	steer_pwm_duty = -min_aar;
 		}
+
 
 		if(steer_pwm_duty > aar){
 			steer_pwm_duty = aar;
@@ -264,8 +281,8 @@ void motor_set_angle(double angle){
 			steer_pwm_duty = -aar;
 		}
 
-		if(steer_pid_setpoint == 0){
-			steer_pwm_duty=0;
+		if(steer_pid_setpoint == 0.0){
+			//steer_pwm_duty=0;
 			motor_set_pwm(steer_pwm_duty, 2);
 		}
 		else{

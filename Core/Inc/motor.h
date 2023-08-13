@@ -22,10 +22,12 @@
 1  prescale 72mhz 3600aar
 */
 void motor_Init();
+
 //Init Motor settings
 
 int32_t steer_encoder_counter();
 int32_t drive_encoder_counter();
+double pwm_debug(int16_t select);
 const double print_gear_ratio(int a);
 //Encoder pins
 //Enc+ A0

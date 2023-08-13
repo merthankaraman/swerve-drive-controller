@@ -194,15 +194,16 @@ int main(void)
   //stepper_Init();
 
   lcd_init();
+  HAL_Delay(200);
   lcd_clear();
   HAL_Delay(200);
   lcd_send_string("Selamun");
   HAL_Delay(1000);
 
   char data[5];
-  int32_t enc_pulses = 0;
+  int32_t enc_pulses = 0, adress_input = 0;
   static int32_t time_now = 0, time_old = 0;
-  bool can_debug, speed_enc_debug, angle_enc_debug;
+  bool can_debug, speed_enc_debug, angle_enc_debug, d_pwm_lcd_debug, s_pwm_lcd_debug;
 //  HAL_Delay(2000);
 //  motor_set_angle(1.57);
 //	HAL_Delay(10000);
@@ -222,6 +223,10 @@ int main(void)
 //		  HAL_Delay(5000);
 //	  }
 	  //CAN_Transmit_Datas(motor);
+
+	  adress_input = HAL_GPIO_ReadPin(AIN0_GPIO_Port, AIN0_Pin);
+	  adress_input += 2 * HAL_GPIO_ReadPin(AIN1_GPIO_Port, AIN1_Pin);
+	  adress_input += 4 * HAL_GPIO_ReadPin(AIN2_GPIO_Port, AIN2_Pin);
 	  CAN_Receive_motors(&motor_speed_wanted,&motor_angle_wanted);
 
 //	  int16_t aa = (int16_t) motor_speed_wanted *100;
@@ -231,13 +236,32 @@ int main(void)
 	  motor_set_angle(motor_angle_wanted);
 
 	  speed_enc_debug = false;
+	  can_debug = false;
+	  angle_enc_debug = false;
+	  d_pwm_lcd_debug = false;
+	  s_pwm_lcd_debug = false;
+	  if (adress_input == 0){
+		  can_debug = true;
+	  }
+	  else if (adress_input == 6){
+		  d_pwm_lcd_debug = true;
+	  }
+	  else if (adress_input == 5){
+		  s_pwm_lcd_debug = true;
+	  }
+	  else if (adress_input == 2){
+		  speed_enc_debug = true;
+	  }
+	  else if (adress_input == 1){
+		  angle_enc_debug = true;
+	  }
+	  time_now = HAL_GetTick();
 	  if (speed_enc_debug){
-		  motor_set_angular_speed(0.2);
 		  lcd_setCursor(1,1);
 		  enc_pulses = drive_encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals:"); lcd_send_string(data);
+		  sprintf(data," %ld",adress_input); lcd_send_string(data);
 
 		  lcd_setCursor(2,1); lcd_send_string("sp:"); sprintf(data,"%.2lf",motor_get_angular_speed()); lcd_send_string(data);
-		  time_now = HAL_GetTick();
 		  lcd_send_string("  "); sprintf(data,"%.5lf",print_gear_ratio(2)); lcd_send_string(data);
 
 		  if (time_now - time_old >= 100){
@@ -245,14 +269,40 @@ int main(void)
 		  }
 	  }
 
-	  angle_enc_debug = false;
+	  if (d_pwm_lcd_debug){
+		  lcd_setCursor(1,1);
+		  sprintf(data,"%.0lf",pwm_debug(1)); lcd_send_string("dd:"); lcd_send_string(data);
+		  sprintf(data,"i: %.0lf",pwm_debug(2)); lcd_send_string(data);
+		  lcd_setCursor(2,1);
+		  sprintf(data,"o: %.0lf",pwm_debug(3)); lcd_send_string(data);
+		  //sprintf(data," tk: %ld",HAL_GetTick()); lcd_send_string(data);
+
+		  if (time_now - time_old >= 100){
+			  time_old = HAL_GetTick();  lcd_clear();
+		  }
+	  }
+
+	  if (s_pwm_lcd_debug){
+		  lcd_setCursor(1,1);
+		  sprintf(data,"%.0lf",pwm_debug(4)); lcd_send_string("sd:"); lcd_send_string(data);
+		  sprintf(data,"i: %.0lf",pwm_debug(5)); lcd_send_string(data);
+		  lcd_setCursor(2,1);
+		  sprintf(data,"o: %.0lf",pwm_debug(6)); lcd_send_string(data);
+		  //sprintf(data," tk: %ld",HAL_GetTick()); lcd_send_string(data);
+
+		  if (time_now - time_old >= 100){
+			  time_old = HAL_GetTick();  lcd_clear();
+		  }
+	  }
+
+	  //angle_enc_debug = false;
 	  if (angle_enc_debug){
-		  motor_set_angle(0.2);
 		  lcd_setCursor(1,1);
 		  enc_pulses = steer_encoder_counter(); sprintf(data,"%ld",enc_pulses); lcd_send_string("pals:"); lcd_send_string(data);
+		  sprintf(data," %ld",adress_input); lcd_send_string(data);
 
 		  lcd_setCursor(2,1); lcd_send_string("an:"); sprintf(data,"%.2lf",motor_get_angle()); lcd_send_string(data);
-		  time_now = HAL_GetTick();
+
 		  lcd_send_string(" "); sprintf(data,"%.5lf",print_gear_ratio(1)); lcd_send_string(data);
 
 		  if (time_now - time_old >= 100){
@@ -260,13 +310,13 @@ int main(void)
 		  }
 	  }
 
-	  can_debug = false;
+	  //can_debug = true;
 	  if (can_debug){
 		  lcd_setCursor(1,1); sprintf(data,"R%d", get_can_numbers(1)); lcd_send_string(data);
 		  lcd_setCursor(1,7); sprintf(data,"%.2f",motor_speed_wanted); lcd_send_string("s:"); lcd_send_string(data);
 		  lcd_setCursor(2,1); sprintf(data,"T%d", get_can_numbers(2)); lcd_send_string(data);
 		  lcd_setCursor(2,7); lcd_send_string("a:"); sprintf(data,"%.2f",motor_angle_wanted); lcd_send_string(data);
-		  time_now = HAL_GetTick();
+
 		  if (time_now - time_old >= 100){
 			  time_old = HAL_GetTick();  lcd_clear();
 		  }
@@ -317,7 +367,7 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
-  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV2;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
