@@ -214,7 +214,7 @@ void motor_set_angular_speed(double angular_speed){
 
 		drive_PID.Compute();
 
-		if (drive_pid_input != 0.0)
+		if (abs(drive_pid_setpoint - drive_pid_input) != 0.0)
 			drive_pwm_duty += drive_pid_output;
 		else
 			drive_pwm_duty = 0;
