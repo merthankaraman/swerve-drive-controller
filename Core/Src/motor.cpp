@@ -32,6 +32,7 @@ extern TIM_HandleTypeDef pwm_timer;
 
 #define aar 900
 #define min_aar 120
+#define drive_aar 450
 
 int32_t steer_encoder_pulses, steer_encoder_pulses_prev;
 int32_t drive_encoder_pulses, drive_encoder_pulses_prev;
@@ -50,7 +51,7 @@ double drive_pulses_diff, steer_pulses_diff, angular_speed_act, angle_act;
 const double steer_kp = 20.0, steer_ki = 10.0, steer_kd = 10.0;
 double steer_pid_input, steer_pid_output, steer_pid_setpoint;
 
-const double drive_kp = 80, drive_ki = 20.0, drive_kd = 10.0;
+const double drive_kp = 20.0, drive_ki = 10.0, drive_kd = 10.0;
 double drive_pid_input, drive_pid_output, drive_pid_setpoint;
 
 double drive_pwm_duty = 0.0;
@@ -206,7 +207,7 @@ void motor_set_angular_speed(double angular_speed){
 		drive_encoder_pulses = drive_encoder_counter();
 		drive_encoder_pulses_prev = drive_encoder_pulses - drive_encoder_pulses_prev;
 
-		angular_speed_act = ((1000.00 * (double) drive_encoder_pulses_prev) / ((double) (drive_nowTime - drive_dTime) * encoder_resolution)) / drive_gear_ratio;
+		angular_speed_act = ((20.00 * (double) drive_encoder_pulses_prev) / ((double) (drive_nowTime - drive_dTime) * encoder_resolution)) / drive_gear_ratio;
 
 		//speed_act = ((double) encoder_pulses / encoder_resolution) / drive_gear_ratio;
 
@@ -226,21 +227,15 @@ void motor_set_angular_speed(double angular_speed){
 			drive_pwm_duty = -min_aar;
 		}*/
 
-		if(drive_pwm_duty > aar){
-			drive_pwm_duty = aar;
+		if(drive_pwm_duty > drive_aar){
+			drive_pwm_duty = drive_aar;
 		}
-		else if(drive_pwm_duty < -aar){
-			drive_pwm_duty = -aar;
+		else if(drive_pwm_duty < -drive_aar){
+			drive_pwm_duty = -drive_aar;
 		}
 
-		if(drive_pid_setpoint == 0.0){
-			//drive_pwm_duty=0;
-			motor_set_pwm(drive_pwm_duty, 1);
-		}
-		else{
-			motor_set_pwm((int16_t)drive_pwm_duty, 1);
+		motor_set_pwm((int16_t)drive_pwm_duty, 1);
 
-		}
 		drive_encoder_pulses_prev = drive_encoder_counter();
 
 		drive_dTime = HAL_GetTick();
@@ -281,14 +276,8 @@ void motor_set_angle(double angle){
 			steer_pwm_duty = -aar;
 		}
 
-		if(steer_pid_setpoint == 0.0){
-			//steer_pwm_duty=0;
-			motor_set_pwm(steer_pwm_duty, 2);
-		}
-		else{
-			motor_set_pwm((int16_t)steer_pwm_duty, 2);
+		motor_set_pwm((int16_t)steer_pwm_duty, 2);
 
-		}
 		steer_encoder_pulses_prev = steer_encoder_counter();
 
 		steer_dTime = HAL_GetTick();
