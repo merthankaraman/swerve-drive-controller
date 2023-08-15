@@ -178,6 +178,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_I2C2_Init();
@@ -198,7 +199,7 @@ int main(void)
   lcd_clear();
   HAL_Delay(200);
   lcd_send_string("Selamun");
-  HAL_Delay(1000);
+  HAL_Delay(200);
 
   char data[5];
   int32_t enc_pulses = 0, adress_input = 0;

@@ -32,7 +32,7 @@ extern TIM_HandleTypeDef pwm_timer;
 
 #define aar 900
 #define min_aar 120
-#define drive_aar 450
+#define drive_aar 600
 
 int32_t steer_encoder_pulses, steer_encoder_pulses_prev;
 int32_t drive_encoder_pulses, drive_encoder_pulses_prev;
@@ -53,6 +53,7 @@ double steer_pid_input, steer_pid_output, steer_pid_setpoint;
 
 const double drive_kp = 20.0, drive_ki = 10.0, drive_kd = 10.0;
 double drive_pid_input, drive_pid_output, drive_pid_setpoint;
+double drive_diff, old_drive_diff = 0.0, steer_diff, old_steer_diff = 0.0;
 
 double drive_pwm_duty = 0.0;
 double steer_pwm_duty = 0.0;
@@ -211,21 +212,24 @@ void motor_set_angular_speed(double angular_speed){
 
 		//speed_act = ((double) encoder_pulses / encoder_resolution) / drive_gear_ratio;
 
-		drive_pid_input = angular_speed_act;// * 50.0;
+		drive_pid_input = angular_speed_act;
+
+		drive_diff = drive_pid_setpoint - drive_pid_input;
 
 		drive_PID.Compute();
 
+		if ((drive_diff * old_drive_diff) <= 0.0){//Yön değişimi olduğunda pwm ve pid sıfırlama
+			drive_pid_output = 0.0;
+			drive_pwm_duty = 0; //denemelik
+		}
+		old_drive_diff = drive_diff;
+
 		if (abs(drive_pid_setpoint - drive_pid_input) != 0.0)
 			drive_pwm_duty += drive_pid_output;
-		else
+		else{
 			drive_pwm_duty = 0;
-/*
-		if ((drive_pid_setpoint > 0) and (drive_pwm_duty < min_aar)){
-			drive_pwm_duty = min_aar;
+			drive_pid_output = 0.0;
 		}
-		else if ((drive_pid_setpoint < 0) and (drive_pwm_duty > -min_aar)){
-			drive_pwm_duty = -min_aar;
-		}*/
 
 		if(drive_pwm_duty > drive_aar){
 			drive_pwm_duty = drive_aar;
@@ -251,22 +255,25 @@ void motor_set_angle(double angle){
 
 	    angle_act = (((double) steer_encoder_pulses / encoder_resolution) * M_PI * 2.0) / steer_gear_ratio;
 
+	    //angle_act = 1.0;
 	    steer_pid_input = angle_act * (180.0 / M_PI);
 
 	    steer_PID.Compute();
 
+	    steer_diff = steer_pid_setpoint - steer_pid_input;
+
+	    if ((steer_diff * old_steer_diff) <= 0.0){//Yön değişimi olduğunda pwm ve pid sıfırlama
+	    	steer_pid_output = 0.0;
+	    	steer_pwm_duty = 0; // Denemelik
+		}
+	    old_steer_diff = steer_diff;
+
 	    if (abs(steer_pid_setpoint - steer_pid_input) != 0.0)
 	    	steer_pwm_duty += steer_pid_output;
-		else
+		else{
 			steer_pwm_duty = 0;
-
-/*
-	    if ((steer_pid_setpoint > 0) and (steer_pwm_duty < min_aar)){
-	    	steer_pwm_duty = min_aar;
+			steer_pid_output = 0.0;
 		}
-	    else if ((steer_pid_setpoint < 0) and (steer_pwm_duty > -min_aar)){
-	    	steer_pwm_duty = -min_aar;
-		}*/
 
 
 		if(steer_pwm_duty > aar){
